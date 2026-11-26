@@ -112,27 +112,28 @@
   <section class="panel">
     <div class="row">
       <div>
-        <label for="user">Usuário do GitHub</label>
+        <label for="user">Nome da conta do GitHub</label>
         <input id="user" placeholder="ex: bryan0701113-cmyk" autocomplete="off" autocapitalize="off" spellcheck="false">
-      </div>
-      <div>
-        <label for="token">Token de acesso (pra ver os privados)</label>
-        <div class="pass">
-          <input id="token" type="password" placeholder="ghp_... ou github_pat_..." autocomplete="off" spellcheck="false">
-          <button id="olho" type="button" title="mostrar/ocultar">👁</button>
-        </div>
       </div>
     </div>
     <div class="acoes">
-      <button class="btn" id="buscar">Buscar repositórios</button>
+      <button class="btn" id="buscar">MOSTRAR TODOS OS REPOSITÓRIOS</button>
       <button class="btn ghost" id="limpar">Limpar</button>
-      <label class="check"><input type="checkbox" id="lembrar" checked> Lembrar neste aparelho</label>
-      <label class="check"><input type="checkbox" id="bloquear" checked> Bloquear contas de jogos famosos</label>
+      <label class="check"><input type="checkbox" id="lembrar" checked> Lembrar a conta</label>
+      <label class="check"><input type="checkbox" id="bloquear" checked> Bloquear jogos famosos</label>
+      <button class="btn ghost" id="btnToken" type="button">Tenho token (opcional)</button>
+    </div>
+    <div id="areaToken" style="display:none;margin-top:12px">
+      <label for="token">Token de acesso (só ele libera os privados)</label>
+      <div class="pass">
+        <input id="token" type="password" placeholder="github_pat_..." autocomplete="off" spellcheck="false">
+        <button id="olho" type="button" title="mostrar/ocultar">👁</button>
+      </div>
     </div>
     <div class="aviso" id="avisoBloqueio">
       Bloqueio ativo: contas e repositórios de jogos/empresas famosas (Garena, Free Fire, Epic, Riot, Rockstar, PUBG, Roblox, Nintendo, Xbox, PlayStation, Steam, Ubisoft, EA, Blizzard, Mojang, Tencent, HoYoverse e outras) não aparecem na lista.
     </div>
-    <div class="aviso">
+    <div class="aviso" id="avisoToken" style="display:none">
       O token é a única forma de o GitHub liberar repositório privado. Ele fica <b>só no seu navegador</b> e vai direto pra API do GitHub, não passa por nenhum servidor meu. Crie um token <b>fine-grained</b> com permissão só de leitura em "Contents" e "Metadata", e apague depois do teste.
     </div>
   </section>
@@ -449,7 +450,7 @@
       } else {
         const pub = await gh("/users/" + encodeURIComponent(login) + "/repos?per_page=100&sort=updated");
         repos = Array.isArray(pub.data) ? pub.data : [];
-        mostrar("info", "Sem token eu só vejo os repositórios públicos (" + repos.length + "). Pra ver os privados, cole seu token acima.");
+        mostrar("info", "Sem token o GitHub só libera os repositórios públicos (" + repos.length + "). Repositório privado exige token, é regra da API do GitHub. Se quiser ver os seus privados, toque em 'Tenho token (opcional)'.");
       }
 
       elLoad.classList.remove("on");
@@ -458,6 +459,16 @@
       elLoad.classList.remove("on");
       mostrar("erro", "Falha de conexão com o GitHub. Verifique sua internet e tente de novo.");
     }
+  }
+
+  const btnToken = $("btnToken"), areaToken = $("areaToken"), avisoToken = $("avisoToken");
+  if(btnToken){
+    btnToken.addEventListener("click", () => {
+      const abrir = areaToken.style.display === "none";
+      areaToken.style.display = abrir ? "block" : "none";
+      avisoToken.style.display = abrir ? "block" : "none";
+      btnToken.textContent = abrir ? "Esconder token" : "Tenho token (opcional)";
+    });
   }
 
   // olho do token
