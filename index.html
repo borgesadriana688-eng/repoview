@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepoView — seus repositórios GitHub</title>
+<style>
+  :root{
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --card: #16161f;
+    --line: rgba(255,255,255,.08);
+    --txt: #e9e9f2;
+    --dim: #9a9ab0;
+    --roxo: hsl(270, 100%, 65%);
+    --roxo2: hsl(270, 100%, 55%);
+    --ok: #3ddc84;
+    --erro: #ff5c7a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:radial-gradient(1200px 600px at 50% -10%, rgba(155,71,255,.18), transparent 60%), var(--bg);
+    color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .logo{
+    width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:22px;
+    background:linear-gradient(140deg,var(--roxo),#5b21b6);box-shadow:0 8px 26px rgba(155,71,255,.45)
+  }
+  h1{font-size:20px;margin:0;letter-spacing:.2px}
+  header p{margin:2px 0 0;color:var(--dim);font-size:13px}
+
+  .panel{background:linear-gradient(180deg,var(--bg2),var(--card));border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
+  label{display:block;font-size:12px;color:var(--dim);margin:0 0 6px;letter-spacing:.4px;text-transform:uppercase}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.row{grid-template-columns:1fr}}
+  input,select{
+    width:100%;background:#0e0e16;border:1px solid var(--line);color:var(--txt);
+    border-radius:12px;padding:13px 14px;font-size:15px;outline:none;transition:.15s
+  }
+  input:focus,select:focus{border-color:var(--roxo);box-shadow:0 0 0 3px rgba(155,71,255,.18)}
+  .pass{position:relative}
+  .pass button{
+    position:absolute;right:6px;top:6px;bottom:6px;width:42px;border:0;border-radius:9px;
+    background:#1c1c28;color:var(--dim);font-size:15px;cursor:pointer
+  }
+  .acoes{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  .btn{
+    border:0;border-radius:12px;padding:13px 22px;font-size:15px;font-weight:600;cursor:pointer;
+    background:linear-gradient(140deg,var(--roxo),var(--roxo2));color:#fff;box-shadow:0 8px 22px rgba(155,71,255,.35)
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:#1a1a26;color:var(--txt);box-shadow:none;border:1px solid var(--line)}
+  .check{display:flex;gap:8px;align-items:center;color:var(--dim);font-size:13px;cursor:pointer}
+  .check input{width:18px;height:18px;accent-color:var(--roxo)}
+
+  .aviso{font-size:13px;color:var(--dim);margin-top:12px;line-height:1.5}
+  .aviso b{color:var(--txt)}
+
+  .perfil{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+  .perfil img{width:64px;height:64px;border-radius:50%;border:2px solid var(--roxo)}
+  .perfil h2{margin:0;font-size:18px}
+  .perfil p{margin:3px 0 0;color:var(--dim);font-size:13px}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 0}
+  .pill{background:#1a1a26;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--dim)}
+  .pill b{color:var(--txt)}
+
+  .barra{display:flex;gap:10px;align-items:center;margin:16px 0 12px;flex-wrap:wrap}
+  .barra input{flex:1;min-width:180px}
+  .barra select{width:auto;min-width:170px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .repo{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;
+    transition:.15s
+  }
+  .repo:hover{border-color:rgba(155,71,255,.55);transform:translateY(-2px)}
+  .repo .topo{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .repo h3{margin:0;font-size:15px;color:#c9a6ff;word-break:break-word}
+  .badge{font-size:10px;padding:3px 8px;border-radius:999px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+  .badge.priv{background:rgba(255,92,122,.14);color:#ff8fa3;border:1px solid rgba(255,92,122,.35)}
+  .badge.pub{background:rgba(61,220,132,.12);color:#79eeae;border:1px solid rgba(61,220,132,.3)}
+  .repo p{margin:0;color:var(--dim);font-size:13px;line-height:1.45;min-height:20px}
+  .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--dim);font-size:12px;margin-top:auto}
+  .lang{display:flex;align-items:center;gap:5px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--roxo)}
+  .repo a{color:#c9a6ff;font-size:12px;text-decoration:none;font-weight:600}
+  .repo a:hover{text-decoration:underline}
+
+  .msg{border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.5;display:none}
+  .msg.erro{display:block;background:rgba(255,92,122,.1);border:1px solid rgba(255,92,122,.35);color:#ffb3c0}
+  .msg.info{display:block;background:rgba(155,71,255,.1);border:1px solid rgba(155,71,255,.35);color:#d3bcff}
+  .vazio{color:var(--dim);text-align:center;padding:34px 10px;font-size:14px}
+  footer{margin-top:30px;text-align:center;color:#6b6b82;font-size:12px;line-height:1.7}
+  .loading{display:none;text-align:center;padding:20px;color:var(--dim)}
+  .loading.on{display:block}
+  .spin{width:22px;height:22px;border:3px solid rgba(155,71,255,.25);border-top-color:var(--roxo);border-radius:50%;display:inline-block;animation:g .8s linear infinite;vertical-align:-5px;margin-right:8px}
+  @keyframes g{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🐙</div>
+    <div>
+      <h1>RepoView</h1>
+      <p>Veja seus repositórios, inclusive os privados</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="row">
+      <div>
+        <label for="user">Usuário do GitHub</label>
+        <input id="user" placeholder="ex: bryan0701113-cmyk" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div>
+        <label for="token">Token de acesso (pra ver os privados)</label>
+        <div class="pass">
+          <input id="token" type="password" placeholder="ghp_... ou github_pat_..." autocomplete="off" spellcheck="false">
+          <button id="olho" type="button" title="mostrar/ocultar">👁</button>
+        </div>
+      </div>
+    </div>
+    <div class="acoes">
+      <button class="btn" id="buscar">Buscar repositórios</button>
+      <button class="btn ghost" id="limpar">Limpar</button>
+      <label class="check"><input type="checkbox" id="lembrar" checked> Lembrar neste aparelho</label>
+      <label class="check"><input type="checkbox" id="bloquear" checked> Bloquear contas de jogos famosos</label>
+    </div>
+    <div class="aviso" id="avisoBloqueio">
+      Bloqueio ativo: contas e repositórios de jogos/empresas famosas (Garena, Free Fire, Epic, Riot, Rockstar, PUBG, Roblox, Nintendo, Xbox, PlayStation, Steam, Ubisoft, EA, Blizzard, Mojang, Tencent, HoYoverse e outras) não aparecem na lista.
+    </div>
+    <div class="aviso">
+      O token é a única forma de o GitHub liberar repositório privado. Ele fica <b>só no seu navegador</b> e vai direto pra API do GitHub, não passa por nenhum servidor meu. Crie um token <b>fine-grained</b> com permissão só de leitura em "Contents" e "Metadata", e apague depois do teste.
+    </div>
+  </section>
+
+  <div class="msg" id="msg"></div>
+  <div class="loading" id="loading"><span class="spin"></span>Buscando no GitHub...</div>
+
+  <section class="panel" id="painelPerfil" style="display:none">
+    <div class="perfil">
+      <img id="avatar" alt="">
+      <div>
+        <h2 id="nome"></h2>
+        <p id="bio"></p>
+        <div class="stats" id="stats"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="barra" id="barra" style="display:none">
+    <input id="filtro" placeholder="Filtrar por nome ou descrição...">
+    <select id="ordem">
+      <option value="updated">Atualizados recentemente</option>
+      <option value="name">Nome (A-Z)</option>
+      <option value="stars">Mais estrelas</option>
+      <option value="privado">Privados primeiro</option>
+    </select>
+    <span class="pill" id="contador"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="vazio" id="vazio" style="display:none"></div>
+
+  <footer>
+    RepoView · feito pro Brayan<br>
+    Usa a API pública do GitHub · nenhum dado sai do seu aparelho
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const API = "https://api.github.com";
+  const $ = id => document.getElementById(id);
+  const elUser = $("user"), elToken = $("token"), elMsg = $("msg"), elGrid = $("grid"),
+        elLoad = $("loading"), elBarra = $("barra"), elVazio = $("vazio"),
+        elFiltro = $("filtro"), elOrdem = $("ordem"), elCont = $("contador"),
+        elPerfil = $("painelPerfil");
+  let repos = [], usuarioLogado = null, ocultosBloqueio = 0;
+
+  // contas/repos de jogos e empresas famosas que ficam bloqueados
+  const BLOQUEADOS = [
+    "garena","freefire","free-fire","epicgames","fortnite","unrealengine",
+    "riotgames","leagueoflegends","valorant","rockstargames","gta","reddeadredemption",
+    "mojang","minecraft","ubisoft","assassinscreed","activision","callofduty",
+    "blizzard","overwatch","worldofwarcraft","tencent","krafton","pubg","battlegrounds",
+    "supercell","clashofclans","clashroyale","brawlstars","gameloft","nintendo","mario",
+    "pokemon","playstation","xbox","bethesda","fallout","skyrim","cdprojekt","cyberpunk",
+    "fromsoftware","eldenring","hoyoverse","mihoyo","genshin","honkai","netease",
+    "roblox","electronicarts","eagames","ea-sports","fifa","battlefield","valve",
+    "steampowered","counterstrike","dota","bandainamco","sega","capcom","residentevil",
+    "square-enix","finalfantasy","konami","wildlife","onface",
+    "candycrush","zynga","nexon","netmarble","playrix","miniclip","poki",
+    "crazygames"
+  ];
+
+  function normaliza(txt){
+    return String(txt || "").toLowerCase().replace(/[\s_\-.\/]/g, "");
+  }
+  function ehBloqueado(...valores){
+    const alvo = valores.map(normaliza).join(" ");
+    if(!alvo.trim()) return false;
+    return BLOQUEADOS.some(b => alvo.includes(normaliza(b)));
+  }
+  function bloqueioAtivo(){
+    const cb = document.getElementById("bloquear");
+    return !!(cb && cb.checked);
+  }
+
+  const CORES = {JavaScript:"#f1e05a",TypeScript:"#3178c6",HTML:"#e34c26",CSS:"#563d7c",
+    Python:"#3572A5",Java:"#b07219","C#":"#178600","C++":"#f34b7d",C:"#555555",
+    PHP:"#4F5D95",Shell:"#89e051",Go:"#00ADD8",Rust:"#dea584",Kotlin:"#A97BFF",
+    Swift:"#F05138",Dart:"#00B4AB",Ruby:"#701516",Lua:"#000080",GDScript:"#355570"};
+
+  function mostrar(tipo, texto){
+    elMsg.className = "msg " + tipo;
+    elMsg.textContent = texto;
+    elMsg.style.display = "block";
+  }
+  function limparMsg(){ elMsg.style.display = "none"; elMsg.textContent = ""; }
+
+  function dataBR(iso){
+    if(!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR", {day:"2-digit", month:"short", year:"numeric"});
+  }
+  function kb(n){
+    if(!n && n !== 0) return "";
+    if(n < 1024) return n + " KB";
+    return (n/1024).toFixed(1).replace(".", ",") + " MB";
+  }
+
+  async function gh(caminho, token){
+    const headers = { "Accept": "application/vnd.github+json" };
+    if(token) headers["Authorization"] = "Bearer " + token;
+    const r = await fetch(API + caminho, { headers });
+    let corpo = null;
+    try { corpo = await r.json(); } catch(e) { corpo = null; }
+    return { ok: r.ok, status: r.status, data: corpo };
+  }
+
+  function render(){
+    const filtro = (elFiltro.value || "").toLowerCase().trim();
+    ocultosBloqueio = 0;
+    let base = repos;
+    if(bloqueioAtivo()){
+      base = repos.filter(r => {
+        const bloq = ehBloqueado(r.name, r.full_name, (r.owner && r.owner.login) || "", r.description || "");
+        if(bloq) ocultosBloqueio++;
+        return !bloq;
+      });
+    }
+    let lista = base.filter(r =>
+      !filtro ||
+      (r.name || "").toLowerCase().includes(filtro) ||
+      (r.description || "").toLowerCase().includes(filtro)
+    );
+    const modo = elOrdem.value;
+    lista = lista.slice().sort((a,b) => {
+      if(modo === "name") return (a.name||"").localeCompare(b.name||"");
+      if(modo === "stars") return (b.stargazers_count||0) - (a.stargazers_count||0);
+      if(modo === "privado") return (b.private?1:0) - (a.private?1:0) || (a.name||"").localeCompare(b.name||"");
+      return new Date(b.updated_at||0) - new Date(a.updated_at||0);
+    });
+
+    elGrid.innerHTML = "";
+    if(!lista.length){
+      elVazio.style.display = "block";
+      elVazio.textContent = ocultosBloqueio
+        ? "Todos os repositórios dessa conta estão na lista de bloqueio de jogos famosos (" + ocultosBloqueio + " ocultados)."
+        : (repos.length ? "Nenhum repositório bate com o filtro." : "Nenhum repositório encontrado.");
+    } else {
+      elVazio.style.display = "none";
+    }
+
+    const frag = document.createDocumentFragment();
+    for(const r of lista){
+      const card = document.createElement("div");
+      card.className = "repo";
+
+      const topo = document.createElement("div");
+      topo.className = "topo";
+      const h3 = document.createElement("h3");
+      h3.textContent = r.name || "(sem nome)";
+      const badge = document.createElement("span");
+      badge.className = "badge " + (r.private ? "priv" : "pub");
+      badge.textContent = r.private ? "PRIVADO" : "PÚBLICO";
+      topo.appendChild(h3); topo.appendChild(badge);
+      card.appendChild(topo);
+
+      const p = document.createElement("p");
+      p.textContent = r.description || "Sem descrição.";
+      card.appendChild(p);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      if(r.language){
+        const lang = document.createElement("span");
+        lang.className = "lang";
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.style.background = CORES[r.language] || "var(--roxo)";
+        lang.appendChild(dot);
+        lang.appendChild(document.createTextNode(r.language));
+        meta.appendChild(lang);
+      }
+      const st = document.createElement("span");
+      st.textContent = "★ " + (r.stargazers_count || 0);
+      meta.appendChild(st);
+      if(r.forks_count){
+        const fk = document.createElement("span");
+        fk.textContent = "⑂ " + r.forks_count;
+        meta.appendChild(fk);
+      }
+      if(r.size){
+        const sz = document.createElement("span");
+        sz.textContent = kb(r.size);
+        meta.appendChild(sz);
+      }
+      const at = document.createElement("span");
+      at.textContent = "atualizado " + dataBR(r.updated_at);
+      meta.appendChild(at);
+      card.appendChild(meta);
+
+      const link = document.createElement("a");
+      link.href = r.html_url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Abrir no GitHub →";
+      card.appendChild(link);
+
+      frag.appendChild(card);
+    }
+    elGrid.appendChild(frag);
+
+    const priv = base.filter(r => r.private).length;
+    elCont.textContent = base.length + " repositórios · " + priv + " privados" +
+      (ocultosBloqueio ? " · " + ocultosBloqueio + " bloqueados" : "");
+    elBarra.style.display = repos.length ? "flex" : "none";
+  }
+
+  async function buscar(){
+    limparMsg();
+    repos = [];
+    elGrid.innerHTML = "";
+    elVazio.style.display = "none";
+    elBarra.style.display = "none";
+    elPerfil.style.display = "none";
+
+    const usuario = elUser.value.trim().replace(/^@/, "");
+    const token = elToken.value.trim();
+    if(!usuario){
+      mostrar("erro", "Digite o usuário do GitHub.");
+      elUser.focus();
+      return;
+    }
+
+    if(bloqueioAtivo() && ehBloqueado(usuario)){
+      mostrar("erro", "Conta bloqueada: @" + usuario + " é de jogo/empresa famosa. Desmarque 'Bloquear contas de jogos famosos' se quiser buscar mesmo assim.");
+      return;
+    }
+
+    elLoad.classList.add("on");
+    try{
+      let login = usuario;
+      let perfil = await gh("/users/" + encodeURIComponent(usuario), token);
+
+      if(!perfil.ok){
+        if(perfil.status === 404){
+          elLoad.classList.remove("on");
+          mostrar("erro", "Usuário @" + usuario + " não existe no GitHub.");
+          return;
+        }
+        if(perfil.status === 401){
+          elLoad.classList.remove("on");
+          mostrar("erro", "Token inválido ou expirado. Gere outro em Settings → Developer settings → Personal access tokens.");
+          return;
+        }
+        if(perfil.status === 403){
+          elLoad.classList.remove("on");
+          mostrar("erro", "Limite de requisições do GitHub atingido. Espere alguns minutos ou use um token.");
+          return;
+        }
+      } else {
+        const d = perfil.data;
+        login = d.login;
+        usuarioLogado = token ? null : null;
+        $("avatar").src = d.avatar_url;
+        $("nome").textContent = (d.name || d.login) + "  @" + d.login;
+        $("bio").textContent = d.bio || "";
+        const stats = $("stats");
+        stats.innerHTML = "";
+        const itens = [
+          ["Repos públicos", d.public_repos],
+          ["Seguidores", d.followers],
+          ["Seguindo", d.following]
+        ];
+        for(const [rot, val] of itens){
+          const s = document.createElement("span");
+          s.className = "pill";
+          s.innerHTML = rot + ": <b>" + (val != null ? val : 0) + "</b>";
+          stats.appendChild(s);
+        }
+        elPerfil.style.display = "block";
+      }
+
+      // com token: pega tudo do dono do token (inclui privados)
+      if(token){
+        const me = await gh("/user", token);
+        if(!me.ok){
+          elLoad.classList.remove("on");
+          mostrar("erro", me.status === 401
+            ? "Token inválido. Confira se copiou inteiro (começa com ghp_ ou github_pat_)."
+            : "Não consegui validar o token (erro " + me.status + ").");
+          return;
+        }
+        const dono = me.data.login;
+        usuarioLogado = dono;
+
+        if(dono.toLowerCase() !== login.toLowerCase()){
+          mostrar("info", "Esse token é da conta @" + dono + ", então só consigo mostrar os privados de @" + dono + ". Vou listar os repositórios públicos de @" + login + ".");
+          const pub = await gh("/users/" + encodeURIComponent(login) + "/repos?per_page=100&sort=updated", token);
+          repos = Array.isArray(pub.data) ? pub.data : [];
+        } else {
+          const priv = await gh("/user/repos?visibility=all&affiliation=owner&per_page=100&sort=updated", token);
+          if(!priv.ok){
+            elLoad.classList.remove("on");
+            mostrar("erro", priv.status === 403
+              ? "O token não tem permissão de leitura de repositórios. Ao criar, marque 'Contents: Read' e 'Metadata: Read'."
+              : "Erro ao listar repositórios (" + priv.status + ").");
+            return;
+          }
+          repos = Array.isArray(priv.data) ? priv.data : [];
+          const qtdPriv = repos.filter(r => r.private).length;
+          mostrar("info", "Logado como @" + dono + ". Encontrei " + repos.length + " repositórios, sendo " + qtdPriv + " privados.");
+        }
+      } else {
+        const pub = await gh("/users/" + encodeURIComponent(login) + "/repos?per_page=100&sort=updated");
+        repos = Array.isArray(pub.data) ? pub.data : [];
+        mostrar("info", "Sem token eu só vejo os repositórios públicos (" + repos.length + "). Pra ver os privados, cole seu token acima.");
+      }
+
+      elLoad.classList.remove("on");
+      render();
+    } catch(e){
+      elLoad.classList.remove("on");
+      mostrar("erro", "Falha de conexão com o GitHub. Verifique sua internet e tente de novo.");
+    }
+  }
+
+  // olho do token
+  $("olho").addEventListener("click", () => {
+    elToken.type = elToken.type === "password" ? "text" : "password";
+  });
+
+  const cbBloq = $("bloquear");
+  if(cbBloq){
+    cbBloq.addEventListener("change", () => {
+      $("avisoBloqueio").style.display = cbBloq.checked ? "block" : "none";
+      if(repos.length) render();
+    });
+  }
+
+  $("buscar").addEventListener("click", buscar);
+  elUser.addEventListener("keydown", e => { if(e.key === "Enter") buscar(); });
+  elToken.addEventListener("keydown", e => { if(e.key === "Enter") buscar(); });
+  elFiltro.addEventListener("input", render);
+  elOrdem.addEventListener("change", render);
+
+  $("limpar").addEventListener("click", () => {
+    elUser.value = ""; elToken.value = ""; repos = [];
+    elGrid.innerHTML = ""; elBarra.style.display = "none";
+    elPerfil.style.display = "none"; elVazio.style.display = "none";
+    limparMsg();
+    try{ localStorage.removeItem("repoview_user"); localStorage.removeItem("repoview_token"); }catch(e){}
+  });
+
+  // lembrar no aparelho
+  function salvar(){
+    try{
+      if($("lembrar").checked){
+        localStorage.setItem("repoview_user", elUser.value.trim());
+        localStorage.setItem("repoview_token", elToken.value.trim());
+      } else {
+        localStorage.removeItem("repoview_user");
+        localStorage.removeItem("repoview_token");
+      }
+    }catch(e){}
+  }
+  $("buscar").addEventListener("click", salvar);
+
+  try{
+    const u = localStorage.getItem("repoview_user");
+    const t = localStorage.getItem("repoview_token");
+    if(u) elUser.value = u;
+    if(t) elToken.value = t;
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
