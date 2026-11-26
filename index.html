@@ -159,6 +159,7 @@
       <option value="stars">Mais estrelas</option>
       <option value="privado">Privados primeiro</option>
     </select>
+    <span class="pill" id="modo"></span>
     <span class="pill" id="contador"></span>
   </div>
 
@@ -408,6 +409,13 @@
         elPerfil.style.display = "block";
       }
 
+      const elModo = $("modo");
+      if(elModo){
+        elModo.textContent = token ? "COM TOKEN · privados inclusos" : "SEM TOKEN · só públicos";
+        elModo.style.borderColor = token ? "rgba(61,220,132,.45)" : "rgba(255,255,255,.12)";
+        elModo.style.color = token ? "#79eeae" : "var(--dim)";
+      }
+
       // com token: pega tudo do dono do token (inclui privados)
       if(token){
         const me = await gh("/user", token);
@@ -497,7 +505,10 @@
     const u = localStorage.getItem("repoview_user");
     const t = localStorage.getItem("repoview_token");
     if(u) elUser.value = u;
-    if(t) elToken.value = t;
+    if(t){
+      elToken.value = t;
+      mostrar("info", "Token salvo neste aparelho encontrado e sendo usado automaticamente (é por isso que privados aparecem sem você digitar nada). Toque em Limpar pra apagar o token e ver só os públicos.");
+    }
   }catch(e){}
 })();
 </script>
